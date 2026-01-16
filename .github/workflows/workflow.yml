@@ -75,7 +75,7 @@ jobs:
         uses: actions/setup-node@v3
            
       - name: Setup npm-config
-        run: jf npm-config --global=true --repo-resolve=joern_demo-joe-npm-app-remote --repo-deploy=joern_demo-joe-npm-app-local
+        run: jf npm-config --global=true --repo-resolve=joe-npm-app-remote --repo-deploy=joe-npm-app-local
                       
       - name: Install Deps
         #working-directory: ./src
