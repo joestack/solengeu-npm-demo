@@ -1,0 +1,37 @@
+name: "Setup JFrog CLI OIDC Example"
+on: push
+
+permissions:
+  # This is required for requesting the OIDC token
+  id-token: write
+  # This is required for actions/checkout
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ vars.JF_URL }}
+          JF_PROJECT: ${{ vars.JF_PROJECT }}
+          #JFROG_CLI_LOG_LEVEL: DEBUG
+        with:
+          oidc-provider-name: joestack/myapp-dev@github
+
+      - name: Run JFrog CLI
+        run: |
+          # Ping the server
+          jf rt ping
+
+      - name: Setup Node npm
+        uses: actions/setup-node@v3
+           
+      - name: Setup npm-config
+        run: jf npm-config --global=true --repo-resolve=myapp-npm-dev-remote --repo-deploy=myapp-npm-dev-local
+           
+      - name: Install Deps
+        working-directory: ./src
+        run: jf npm install
