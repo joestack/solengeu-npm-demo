@@ -1,4 +1,4 @@
-name: "joern_demo"
+name: "joern-demo-npm"
 
 on:
   workflow_dispatch:
@@ -6,10 +6,10 @@ on:
   push: # Triggers scan-repo flow for every push to the specified branches
     branches:
       - main
-    paths:
-      - 'src/**'
-      - 'Dockerfile'
-      - 'README.md'
+    # paths:
+    #   - 'src/**'
+    #   - 'Dockerfile'
+    #   - 'README.md'
 
 permissions:
   pull-requests: write
@@ -75,7 +75,7 @@ jobs:
         uses: actions/setup-node@v3
            
       - name: Setup npm-config
-        run: jf npm-config --global=true --repo-resolve=joe-npm-app-remote --repo-deploy=joe-npm-app-local
+        run: jf npm-config --global=true --repo-resolve=joern-npm-remote --repo-deploy=joern-npm-local
                       
       - name: Install Deps
         #working-directory: ./src
@@ -105,7 +105,7 @@ jobs:
          
       - name: Publish
         #working-directory: ./src
-        run: jf npm publish --project="joern_demo"
+        run: jf npm publish
 
       # - name: Build Docker Image
       #   working-directory: ./
@@ -148,12 +148,12 @@ jobs:
         #working-directory: ./src
         run: |
           # Collect environment variables for the build
-          jf rt build-collect-env --project="joern_demo"
+          jf rt build-collect-env
           # Collect VCS details from git and add them to the build
-          jf rt build-add-git --project="joern_demo"
+          jf rt build-add-git
           # Publish build info
           ##jf rt build-publish --detailed-summary --env-include="*" --project=myapp
-          jf rt build-publish --detailed-summary --project="joern_demo"
+          jf rt build-publish --detailed-summary
 
       # - name: Wait 30s for Indexing
       #   run: |
@@ -161,4 +161,4 @@ jobs:
 
       - name: Buld scan
         run: |
-          jf build-scan --project="joern_demo" # Build Info in GitHub Summary: Security Issues
+          jf build-scan # Build Info in GitHub Summary: Security Issues
