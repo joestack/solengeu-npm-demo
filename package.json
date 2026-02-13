@@ -41,6 +41,7 @@
     "eslint-config-prettier": "^9.1.0",
     "httpyac": "^6.15.1",
     "nodemon": "^3.1.7",
-    "prettier": "~3.3.3"
+    "prettier": "~3.3.3",
+    "jfrog-curation-malicious-dummy": "1.0.0"
   }
 }
