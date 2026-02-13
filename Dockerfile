@@ -9,11 +9,11 @@ ENV NODE_ENV production
 WORKDIR /app 
 
 # For Docker layer caching do this BEFORE copying in rest of app
-COPY src/package*.json ./
+COPY package*.json ./
 RUN npm install --production
 
 # NPM is done, now copy in the rest of the project to the workdir
-COPY src ./
+COPY / ./
 
 # Port 3000 for our Express server 
 EXPOSE 3000
