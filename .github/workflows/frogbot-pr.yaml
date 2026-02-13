@@ -1,0 +1,38 @@
+name: "Frogbot Scan Pull Request"
+on:
+  pull_request_target:
+    # added reopened 
+    types: [opened, synchronize, reopened] # Triggers scan-pr flow for every opened/updated pull request
+    # branches:
+    #   - main
+permissions:
+  pull-requests: write
+  contents: read 
+  # [Mandatory If using OIDC authentication protocol instead of JF_ACCESS_TOKEN]
+  id-token: write
+jobs:
+  scan-pull-request:
+    runs-on: ubuntu-latest
+    # A pull request needs to be approved before Frogbot scans it. Any GitHub user who is associated with the
+    # "frogbot" GitHub environment can approve the pull request to be scanned.
+    environment: frogbot
+    steps:
+ 
+      - uses: jfrog/frogbot@v2
+        env:
+          JF_URL: ${{ vars.JF_URL }}
+          JF_GIT_TOKEN: ${{ secrets.JF_GIT_TOKEN }}
+          # Security Settings
+          JF_MIN_SEVERITY: "critical"
+          # is not interpreted here. Is for the yml config. Here in ENV it is JF_FAIL.
+          #JF_FAIL_ON_SECURITY_ISSUES: "false"
+          JF_FAIL: "false"
+          # INFO: Even if no WATCHES are configured and you have an active Xray policy/watch that has "fail pull" enabled, Frogbot will fail with exit code 1
+          #JF_WATCHES: "w-critical"
+          JF_INCLUDE_ALL_VULNERABILITIES: "true"
+          # if JF_FAIL=true, Frogbot process ends with exit 1 in case of an issue (no further information in PR) 
+          #JF_FAIL: "false"
+          #JFROG_CLI_LOG_LEVEL: DEBUG
+        with:
+          oidc-provider-name: "joern-github"
+          #oidc-audience: ptfl-aud
