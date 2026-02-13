@@ -2,7 +2,7 @@ ARG ARCH=
 ARG IMAGE_BASE=20-alpine
 
 #FROM ${ARCH}node:$IMAGE_BASE
-FROM solengeu.jfrog.io/joern_demo-joe-docker-app-remote/${ARCH}node:$IMAGE_BASE
+FROM solengeu.jfrog.io/joern-docker-remote/${ARCH}node:$IMAGE_BASE
 LABEL Name="Node.js Demo App" Version=4.9.9
 LABEL org.opencontainers.image.source = "https://github.com/benc-uk/nodejs-demoapp"
 ENV NODE_ENV production
