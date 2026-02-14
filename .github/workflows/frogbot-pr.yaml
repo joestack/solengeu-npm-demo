@@ -26,7 +26,7 @@ jobs:
           JF_MIN_SEVERITY: "critical"
           # is not interpreted here. Is for the yml config. Here in ENV it is JF_FAIL.
           #JF_FAIL_ON_SECURITY_ISSUES: "false"
-          JF_FAIL: "false"
+          JF_FAIL: "true"
           # INFO: Even if no WATCHES are configured and you have an active Xray policy/watch that has "fail pull" enabled, Frogbot will fail with exit code 1
           #JF_WATCHES: "w-critical"
           JF_INCLUDE_ALL_VULNERABILITIES: "true"
