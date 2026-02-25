@@ -34,7 +34,9 @@
     "express-session": "1.18.0",
     "mongodb": "^6.9.0",
     "morgan": "^1.10.0",
-    "redis": "^4.7.0"
+    "redis": "^4.7.0",
+    "jfrog-curation-malicious-dummy": "1.0.0"
+
   },
   "devDependencies": {
     "eslint": "^9.12.0",
