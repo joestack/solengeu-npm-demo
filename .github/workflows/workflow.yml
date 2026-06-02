@@ -116,6 +116,34 @@ jobs:
         #working-directory: ./src
         run: jf npm publish
 
+      # Build the app once: strip dev dependencies, then pack the runtime app (source +
+      # production node_modules) into a single tarball that the Docker image will consume.
+      - name: Package App
+        run: |
+          npm prune --omit=dev
+          tar -czf app.tar.gz \
+            package.json package-lock.json \
+            server.mjs graph.mjs \
+            routes todo views public \
+            node_modules
+
+      # Upload the build artifact to Artifactory (recorded in build-info via the JFROG_CLI_BUILD_* env).
+      - name: Upload Build Artifact to Artifactory
+        env:
+          ARTIFACT_PATH: joern-generic-local/myapp/${{ github.run_number }}/app.tar.gz
+        run: jf rt upload app.tar.gz "$ARTIFACT_PATH"
+
+      # Pull the artifact back from Artifactory into the Docker build context, so the image is
+      # assembled from the published artifact rather than recompiled. --flat drops the repo path
+      # so the file lands as ./app.tar.gz next to the Dockerfile.
+      - name: Download Build Artifact for Docker context
+        env:
+          ARTIFACT_PATH: joern-generic-local/myapp/${{ github.run_number }}/app.tar.gz
+        run: |
+          rm -f app.tar.gz
+          jf rt download "$ARTIFACT_PATH" ./ --flat
+          ls -la app.tar.gz
+
       - name: Build Docker Image
         working-directory: ./
         env:

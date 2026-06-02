@@ -8,12 +8,10 @@ LABEL org.opencontainers.image.source="https://github.com/benc-uk/nodejs-demoapp
 ENV NODE_ENV=production
 WORKDIR /app
 
-# For Docker layer caching, install dependencies BEFORE copying in the rest of the app
-COPY package*.json ./
-RUN npm install --production
-
-# NPM is done, now copy in the rest of the project to the workdir
-COPY / ./
+# The application (source + node_modules) is built once in CI, uploaded to Artifactory
+# (joern-generic-local) and downloaded back into the build context. ADD auto-extracts the
+# gzipped tarball into /app, so there is no second `npm install` / compile step here.
+ADD app.tar.gz ./
 
 # Port 3000 for our Express server
 EXPOSE 3000
