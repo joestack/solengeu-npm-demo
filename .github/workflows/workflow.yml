@@ -40,9 +40,10 @@ jobs:
           ##JFROG_CLI_LOG_LEVEL: DEBUG
         with:
           oidc-provider-name: joern-github
-          # Pin a CLI version that supports `jf audit --static-sca --snippet`
-          # (Snippet Detection). The default/cached runner CLI was older and rejected these flags.
-          version: 2.105.0
+          # Pin a CLI version that supports `jf audit --static-sca --snippet` (Snippet Detection).
+          # 2.106.0 re-syncs the CLI with the current analyzer-manager; 2.105.0 hit a cyclonedx
+          # gob type mismatch (EvidenceIdentityChoice) when generating the static-sca SBOM.
+          version: 2.106.0
 
       - name: JFrog CLI Test
         run: |
