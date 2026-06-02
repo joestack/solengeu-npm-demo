@@ -54,20 +54,27 @@ jobs:
           password: ${{ steps.setup-cli.outputs.oidc-token }}
 
 
-      # - name: Scan Source configured
-      #   run: |
-      #     jf audit \
-      #       --extended-table \
-      #       --sast --sca --secrets \
-      #       --npm \
-      #       --sbom \
-      #       --format=table > scan-result-audit 
+      - name: Scan Source (SCA + Contextual Analysis + Secrets + SAST + Snippet Detection)
+        run: |
+          jf audit \
+            --sca --sast --secrets \
+            --static-sca \
+            --snippet \
+            --sbom \
+            --extended-table \
+            --format=table | tee scan-result-audit
+        # --static-sca resolves dependencies from the lock file without running npm (no build needed).
+        # --snippet enables Snippet Detection (requires --static-sca); identifies the open-source origin
+        #   of copied/AI-generated code and its license/security risk. Requires JFrog CLI >= 2.95.0 and a
+        #   Unified Security (or higher) entitlement. Full results are also pushed to the JFrog Platform.
+        # Add --watches "<watch>" or --project "<key>" to evaluate against an Xray policy/watch.
 
-      # - name: Push Source Code Artifacts to GitHub
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: source-code-scan
-      #     path: scan-result-audit
+      - name: Push Source Code Artifacts to GitHub
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-code-scan
+          path: scan-result-audit
 
 
       - name: Setup Node npm

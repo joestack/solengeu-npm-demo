@@ -1,10 +1,14 @@
-name: "Frogbot Scan Pull Request"
+name: "Frogbot Scan Pull Request (v2 - DEPRECATED)"
+# DEPRECATED: superseded by frogbot-scan-pull-request.yml (jfrog/frogbot@v3).
+# The automatic PR trigger is disabled to avoid duplicate scans/comments; kept for reference.
+# Can still be run manually via the Actions tab if needed.
 on:
-  pull_request_target:
-    # added reopened 
-    types: [opened, synchronize, reopened] # Triggers scan-pr flow for every opened/updated pull request
-    # branches:
-    #   - main
+  workflow_dispatch:
+  # pull_request_target:
+  #   # added reopened
+  #   types: [opened, synchronize, reopened] # Triggers scan-pr flow for every opened/updated pull request
+  #   # branches:
+  #   #   - main
 permissions:
   pull-requests: write
   contents: read 

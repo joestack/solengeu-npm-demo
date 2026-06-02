@@ -1,0 +1,39 @@
+# Dependencies are installed inside the image (npm install --production)
+node_modules/
+.npm/
+.npmrc
+
+# Git & CI
+.git/
+.gitignore
+.github/
+.jfrog/
+
+# Tooling / editor / agent
+.claude/
+.vscode/
+.idea/
+eslint.config.mjs
+
+# Docker
+Dockerfile*
+.dockerignore
+
+# Tests (not needed at runtime)
+tests/
+
+# Docs & demo notes
+*.md
+demo.txt
+
+# Build / scan artifacts & logs
+scan-result-audit
+scan-result-image.json
+*.sarif
+test-results.xml
+coverage/
+*.log
+
+# Environment / secrets
+.env
+.env.*
