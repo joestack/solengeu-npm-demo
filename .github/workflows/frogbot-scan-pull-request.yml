@@ -19,20 +19,22 @@ jobs:
         env:
           JF_URL: ${{ vars.JF_URL }}
           JF_GIT_TOKEN: ${{ secrets.JF_GIT_TOKEN }}
-          # Security Settings
+
+          # ---------------------------------------------------------------------------------------------
+          # REQUIRED for Snippet Detection (and the other advanced scanners: Contextual Analysis,
+          # Secrets, IaC, SAST) configured centrally in the JFrog Platform:
+          #   Administration > Xray Settings > Indexed Resources > Git Repositories
+          #     > select this repo > Configure > enable "Snippet Detection" > Apply
+          # Frogbot only reads that platform Config Profile when this is set to "true" (default: false).
+          # Without it, Frogbot runs legacy env-var mode and snippet detection never executes.
+          JF_USE_CONFIG_PROFILE: "true"
+
+          # Security Settings (env vars take priority over the Config Profile)
           JF_MIN_SEVERITY: "critical"
           JF_FAIL: "true"
           JF_INCLUDE_ALL_VULNERABILITIES: "true"
           #JF_WATCHES: "w-critical"
           #JFROG_CLI_LOG_LEVEL: DEBUG
-
-          # ---------------------------------------------------------------------------------------------
-          # Snippet Detection (and the other Advanced Security scanners: SCA, Contextual Analysis,
-          # Secrets, IaC, SAST) is enabled centrally in the JFrog Platform, not via env vars here:
-          #   Administration > Xray Settings > Indexed Resources > Git Repositories
-          #     > select this repo > Configure > enable "Snippet Detection" > Apply
-          # Frogbot v3 automatically picks up that Config Profile by repository name on each scan.
-          # ---------------------------------------------------------------------------------------------
         with:
           oidc-provider-name: "joern-github"
           #oidc-audience: ptfl-aud
