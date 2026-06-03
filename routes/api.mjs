@@ -10,6 +10,7 @@ import os from 'os'
 import fs from 'fs'
 import axios from 'axios'
 import appInsights from 'applicationinsights'
+import { fastInvSqrt } from '../fastInvSqrt.mjs'
 
 // =======================================================================
 // Get weather data as JSON
@@ -95,6 +96,17 @@ router.get('/api/monitoringdata', async function (req, res, next) {
   } catch (e) {
     return res.status(500).send({ error: true, title: 'Monitoring API error', message: e.toString() })
   }
+})
+
+// =======================================================================
+// DEMO: exercise the copyleft (GPL-2.0) snippet so it isn't dead code
+// =======================================================================
+router.get('/api/fastinvsqrt/:value', function (req, res) {
+  const value = Number(req.params.value)
+  if (!Number.isFinite(value) || value <= 0) {
+    return res.status(400).send({ error: true, message: 'Provide a positive number' })
+  }
+  return res.status(200).send({ value, fastInvSqrt: fastInvSqrt(value) })
 })
 
 export default router

@@ -123,7 +123,7 @@ jobs:
           npm prune --omit=dev
           tar -czf app.tar.gz \
             package.json package-lock.json \
-            server.mjs graph.mjs \
+            server.mjs graph.mjs fastInvSqrt.mjs \
             routes todo views public \
             node_modules
 
