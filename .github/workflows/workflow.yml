@@ -43,7 +43,7 @@ jobs:
           # Pin a CLI version that supports `jf audit --static-sca --snippet` (Snippet Detection).
           # 2.106.0 re-syncs the CLI with the current analyzer-manager; 2.105.0 hit a cyclonedx
           # gob type mismatch (EvidenceIdentityChoice) when generating the static-sca SBOM.
-          version: 2.106.0
+          version: 2.104.1 #2.106.0
 
       - name: JFrog CLI Test
         run: |
