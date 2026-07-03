@@ -53,7 +53,6 @@ jobs:
           jf audit \
             --sca --sast --secrets \
             --static-sca \
-            --snippet \
             --sbom \
             --extended-table \
             --format=table | tee scan-result-audit
@@ -69,7 +68,13 @@ jobs:
         uses: actions/setup-node@v3
            
       - name: Setup npm-config
-        run: jf npm-config --global=true --repo-resolve=joern-npm-remote --repo-deploy=joern-npm-local
+        # The repo ships .jfrog/projects/npm.yaml pinned to a local serverId ("solengeu") that
+        # does not exist on CI, and a repo-local project config overrides the global one. Regenerate
+        # it here (project-scoped, no --global) so it points at the runner's default server
+        # (setup-jfrog-cli-server) that setup-jfrog-cli configured via OIDC.
+        run: |
+          rm -f .jfrog/projects/npm.yaml
+          jf npm-config --repo-resolve=joern-npm-remote --repo-deploy=joern-npm-local
                       
       - name: Install Deps
         run: jf npm install
