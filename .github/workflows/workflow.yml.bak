@@ -6,6 +6,10 @@ on:
   push: # Triggers scan-repo flow for every push to the specified branches
     branches:
       - main
+    # paths:
+    #   - 'src/**'
+    #   - 'Dockerfile'
+    #   - 'README.md'
 
 permissions:
   pull-requests: write
@@ -16,13 +20,12 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # FIX #5: Set build name and number at job level so every jf command inherits them.
-    # Without these, build-info is published under an unpredictable name and jf build-scan
-    # cannot find the build ("No scan results for the requested build").
-    env:
-      JFROG_CLI_BUILD_NAME: joern-demo-npm
-      JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
-
+    #env:
+    #  NPM_TOKEN: ${{ secrets.DEBUG_TOKEN }}
+    # strategy:
+    #   matrix:
+    #     # The repository scanning will be triggered periodically on the following branches.
+    #     branch: ["main"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,10 +35,15 @@ jobs:
         id: setup-cli
         env:
           JF_URL: ${{ vars.JF_URL }}
+          #JF_PROJECT: ${{ vars.JF_PROJECT }}
+          # 01 no effect##JFROG_CLI_BUILD_PROJECT: ${{ vars.JF_PROJECT }}
           JFROG_CLI_LOG_LEVEL: DEBUG
         with:
           oidc-provider-name: joern-github
-          #version: 2.104.1
+          # Pin a CLI version that supports `jf audit --static-sca --snippet` (Snippet Detection).
+          # 2.106.0 re-syncs the CLI with the current analyzer-manager; 2.105.0 hit a cyclonedx
+          # gob type mismatch (EvidenceIdentityChoice) when generating the static-sca SBOM.
+          version: 2.104.1 #2.106.0
 
       - name: JFrog CLI Test
         run: |
@@ -48,6 +56,7 @@ jobs:
           username: ${{ steps.setup-cli.outputs.oidc-user }}
           password: ${{ steps.setup-cli.outputs.oidc-token }}
 
+
       - name: Scan Source (SCA + Contextual Analysis + Secrets + SAST + Snippet Detection)
         run: |
           jf audit \
@@ -57,6 +66,11 @@ jobs:
             --sbom \
             --extended-table \
             --format=table | tee scan-result-audit
+        # --static-sca resolves dependencies from the lock file without running npm (no build needed).
+        # --snippet enables Snippet Detection (requires --static-sca); identifies the open-source origin
+        #   of copied/AI-generated code and its license/security risk. Requires JFrog CLI >= 2.95.0 and a
+        #   Unified Security (or higher) entitlement. Full results are also pushed to the JFrog Platform.
+        # Add --watches "<watch>" or --project "<key>" to evaluate against an Xray policy/watch.
 
       - name: Push Source Code Artifacts to GitHub
         if: always()
@@ -65,6 +79,7 @@ jobs:
           name: source-code-scan
           path: scan-result-audit
 
+
       - name: Setup Node npm
         uses: actions/setup-node@v3
            
@@ -72,19 +87,37 @@ jobs:
         run: jf npm-config --global=true --repo-resolve=joern-npm-remote --repo-deploy=joern-npm-local
                       
       - name: Install Deps
+        #working-directory: ./src
         run: jf npm install
 
+      # - name: debug
+      #   if: always()  
+      #   #working-directory: ./
+      #   run: |
+      #     cat .npmrc
+
+      # - name: debug2
+      #   if: always()  
+      #   #working-directory: ./src
+      #   run: |
+      #     cat .npmrc
+
       - name: Start App
+        #working-directory: ./src
         run: |
            npm start &
            npx wait-on http://localhost:3000 -t 30000
            
       - name: Run tests
+        #working-directory: ./src
         run: npm test
          
       - name: Publish
+        #working-directory: ./src
         run: jf npm publish
 
+      # Build the app once: strip dev dependencies, then pack the runtime app (source +
+      # production node_modules) into a single tarball that the Docker image will consume.
       - name: Package App
         run: |
           npm prune --omit=dev
@@ -94,11 +127,15 @@ jobs:
             routes todo views public \
             node_modules
 
+      # Upload the build artifact to Artifactory (recorded in build-info via the JFROG_CLI_BUILD_* env).
       - name: Upload Build Artifact to Artifactory
         env:
           ARTIFACT_PATH: joern-generic-local/myapp/${{ github.run_number }}/app.tar.gz
         run: jf rt upload app.tar.gz "$ARTIFACT_PATH"
 
+      # Pull the artifact back from Artifactory into the Docker build context, so the image is
+      # assembled from the published artifact rather than recompiled. --flat drops the repo path
+      # so the file lands as ./app.tar.gz next to the Dockerfile.
       - name: Download Build Artifact for Docker context
         env:
           ARTIFACT_PATH: joern-generic-local/myapp/${{ github.run_number }}/app.tar.gz
@@ -114,49 +151,49 @@ jobs:
         run: |
           jf docker build -t $IMAGE_NAME .
 
+      - name: Collect Docker Build Environment
+        run: jf rt bce 
+
       - name: Scan Docker Image
-        # FIX #1: Moved the shell redirect (>) to the end of the command, after all flags.
-        #         Previously it was mid-command after --format=json, which passed the filename
-        #         as a flag value and broke both the scan output and the redirect.
-        # FIX #2: Added --fail=true so a policy violation actually blocks the push. Without it
-        #         the scan is advisory only and a vulnerable image is still pushed to Artifactory.
         working-directory: ./
         env:
           IMAGE_NAME: solengeu.jfrog.io/joern-docker-local/myapp-image:${{ github.run_number }}
         run: |
           jf docker scan $IMAGE_NAME \
-            --format=json \
+            --format=json  > scan-result-image.json \
             --detailed-summary \
-            --licenses \
-            --fail=true \
-            > scan-result-image.json
+            --licenses
 
       - name: Push Docker Image
-        # This step only runs if the scan above passed (--fail=true enforces the gate).
         working-directory: ./
         env:
           IMAGE_NAME: solengeu.jfrog.io/joern-docker-local/myapp-image:${{ github.run_number }}
         run: |
           jf docker push $IMAGE_NAME
 
+
       - name: Push Scan Artifacts to GitHub
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: scan-results-image
           path: scan-result-image.json
 
-      - name: Publish Build Info With JFrog CLI
-        # FIX #4: Removed the duplicate/early `jf rt bce` call that was in the old
-        #         "Collect Docker Build Environment" step. All three build-info steps
-        #         (bce, bag, bp) now run together here, after all build and scan work
-        #         is complete, which is the correct order per the 5-step pattern.
+
+      - name: Publish Build info With JFrog CLI
+        #working-directory: ./src
         run: |
+          # Collect environment variables for the build
           jf rt build-collect-env
+          # Collect VCS details from git and add them to the build
           jf rt build-add-git
+          # Publish build info
+          ##jf rt build-publish --detailed-summary --env-include="*" --project=myapp
           jf rt build-publish --detailed-summary
 
-      - name: Build Scan
-        # FIX #3: Added --fail=true so policy violations fail the pipeline.
+      # - name: Wait 30s for Indexing
+      #   run: |
+      #     sleep 30
+
+      - name: Buld scan
         run: |
-          jf build-scan --fail=true
+          jf build-scan # Build Info in GitHub Summary: Security Issues

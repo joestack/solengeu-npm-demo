@@ -41,6 +41,9 @@ malicious packackes:
 "jfrog-curation-malicious-dummy": "1.0.0"
 "bidirectional-adapter": "1.2.5"
 
+"curl": "0.1.2",
+"jfrog-curation-malicious-dummy": "1.0.0"
+
 XRAY WATCH
 version contraints:
 "morgan": "1.9.0" # to fail policy 
