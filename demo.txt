@@ -43,6 +43,7 @@ malicious packackes:
 
 "curl": "0.1.2",
 "jfrog-curation-malicious-dummy": "1.0.0"
+"cors.js": "^0.0.1-security"
 
 XRAY WATCH
 version contraints:
